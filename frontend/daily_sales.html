@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>নগদ বিক্রি লগ — ডিজিটাল হিসাবখাতা</title>
+
+    <!-- Early theme init script to prevent theme flash -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem("theme");
+            if (savedTheme === "light") {
+                document.documentElement.setAttribute("data-theme", "light");
+            }
+        })();
+    </script>
+
+    <!-- Google Fonts: Outfit & Noto Sans Bengali -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #080c14;
+            --bg-gradient: 
+                radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.1) 0%, transparent 55%);
+            --card-bg: rgba(17, 24, 39, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.35);
+            --accent-green: #10b981;
+            --accent-green-glow: rgba(16, 185, 129, 0.4);
+            --accent-teal: #06b6d4;
+            --accent-cyan-glow: rgba(6, 182, 212, 0.35);
+            --accent-purple: #8b5cf6;
+            --accent-purple-glow: rgba(139, 92, 246, 0.35);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --text-heading: #ffffff;
+            --input-bg: rgba(11, 15, 25, 0.7);
+            --input-border: rgba(255, 255, 255, 0.12);
+            --input-text: #f3f4f6;
+            --table-header-bg: rgba(11, 15, 25, 0.85);
+            --table-row-hover: rgba(255, 255, 255, 0.04);
+            --modal-bg: #111827;
+            --kpi-bg: rgba(17, 24, 39, 0.65);
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        [data-theme="light"] {
+            --bg-dark: #f8fafc;
+            --bg-gradient: 
+                radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.06) 0%, transparent 55%);
+            --card-bg: rgba(255, 255, 255, 0.88);
+            --card-border: rgba(0, 0, 0, 0.08);
+            --card-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.06);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --text-heading: #0f172a;
+            --input-bg: #ffffff;
+            --input-border: rgba(0, 0, 0, 0.15);
+            --input-text: #0f172a;
+            --table-header-bg: #f1f5f9;
+            --table-row-hover: rgba(0, 0, 0, 0.03);
+            --modal-bg: #ffffff;
+            --kpi-bg: rgba(255, 255, 255, 0.85);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans Bengali', 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            background-image: var(--bg-gradient);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1120px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 20px;
+            padding: 20px 28px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-icon {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-teal));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            box-shadow: 0 0 24px var(--accent-purple-glow);
+            transition: transform 0.3s ease;
+        }
+
+        .brand-icon:hover {
+            transform: rotate(-6deg) scale(1.05);
+        }
+
+        .brand-text h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-heading);
+            letter-spacing: -0.3px;
+        }
+
+        .brand-text p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Running Total Hero Banner */
+        .total-banner {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(6, 182, 212, 0.18));
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            backdrop-filter: blur(16px);
+            border-radius: 20px;
+            padding: 22px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.2);
+            transition: transform 0.25s ease;
+        }
+
+        .total-banner:hover {
+            transform: translateY(-2px);
+        }
+
+        .total-banner-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-heading);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .total-banner-value {
+            font-size: 34px;
+            font-weight: 700;
+            color: var(--accent-green);
+            font-family: 'Noto Sans Bengali', sans-serif;
+            text-shadow: 0 0 16px var(--accent-green-glow);
+        }
+
+        /* Layout Grid */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 850px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Glass Card */
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.16);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-heading);
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 14px;
+        }
+
+        .card-title .icon {
+            font-size: 22px;
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+        }
+
+        /* Voice Input Controls */
+        .input-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .record-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 28px;
+            background: var(--input-bg);
+            border: 1px dashed var(--input-border);
+            border-radius: 16px;
+            gap: 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .record-container:hover {
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-record {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 28px rgba(239, 68, 68, 0.4);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
+        }
+
+        .btn-record:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 36px rgba(239, 68, 68, 0.65);
+        }
+
+        .btn-record.recording {
+            animation: pulse-red 1.2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 22px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .record-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 4px 0;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .divider span {
+            padding: 0 12px;
+        }
+
+        /* Controls / Selectors */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        select, input[type="text"], input[type="number"], input[type="file"] {
+            width: 100%;
+            padding: 11px 16px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            color: var(--input-text);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent-teal);
+            box-shadow: 0 0 0 3px var(--accent-cyan-glow);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 22px;
+            border-radius: 12px;
+            border: none;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-sm {
+            padding: 7px 12px;
+            font-size: 12px;
+            border-radius: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-green), #059669);
+            color: white;
+            box-shadow: 0 4px 18px var(--accent-green-glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px var(--accent-green-glow);
+        }
+
+        .btn-secondary {
+            background: var(--input-bg);
+            color: var(--text-main);
+            border: 1px solid var(--input-border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--card-border);
+            transform: translateY(-1px);
+        }
+
+        .btn-purple {
+            background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
+            color: white;
+            box-shadow: 0 4px 18px var(--accent-purple-glow);
+        }
+
+        .btn-purple:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px var(--accent-purple-glow);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+        }
+
+        .sample-q-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sample-q-btn:hover {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: var(--accent-purple);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        /* Transcript Output Box */
+        .transcript-box {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            padding: 16px;
+            min-height: 70px;
+            font-family: 'Noto Sans Bengali', sans-serif;
+            font-size: 15px;
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        audio {
+            width: 100%;
+            height: 40px;
+            border-radius: 10px;
+        }
+
+        /* Items Table in Step 2 */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 13px;
+        }
+
+        .items-table th {
+            padding: 8px 12px;
+            background: var(--table-header-bg);
+            border-bottom: 1px solid var(--card-border);
+            font-weight: 600;
+        }
+
+        .items-table td {
+            padding: 8px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .items-table input {
+            padding: 6px 10px;
+            font-size: 13px;
+        }
+
+        .btn-remove-row {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px 8px;
+        }
+
+        /* Sales History Cards & Filter Bar */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--input-border);
+            background: var(--input-bg);
+            color: var(--text-muted);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
+            color: white;
+            border-color: var(--accent-purple);
+            box-shadow: 0 2px 10px var(--accent-purple-glow);
+        }
+
+        .date-group-header {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent-teal);
+            padding: 10px 4px 6px 4px;
+            border-bottom: 1px solid var(--card-border);
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sale-card-item {
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 14px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: transform 0.2s ease;
+        }
+
+        .sale-card-item:hover {
+            transform: translateX(4px);
+            border-color: rgba(6, 182, 212, 0.3);
+        }
+
+        .sale-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .sale-card-time {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .sale-card-amount {
+            color: var(--accent-green);
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .sale-card-items-list {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+
+        .sale-item-chip {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 3px 8px;
+            font-size: 12px;
+            color: var(--text-main);
+        }
+
+        /* Collapsible Dropdown Transaction List Cards */
+        .tx-card {
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            margin-top: 8px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .tx-header {
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            background: rgba(255, 255, 255, 0.02);
+            transition: background 0.2s ease;
+        }
+
+        .tx-header:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .tx-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .tx-amount {
+            color: var(--accent-green);
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .tx-details {
+            display: none;
+            padding: 12px 16px;
+            border-top: 1px solid var(--card-border);
+            background: rgba(0, 0, 0, 0.04);
+        }
+
+        .tx-details.open {
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert-banner {
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 14px;
+            display: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Header -->
+    <header class="app-header">
+        <div class="brand-title">
+            <div class="brand-icon">📋</div>
+            <div class="brand-text">
+                <h1>আজকের নগদ বিক্রি লগ (Daily Sales Log)</h1>
+                <p>নগদ বিক্রয়ের সময় সাশ্রয়ী বাংলা ভয়েস ও আইটেম এনট্রি</p>
+            </div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <button id="themeToggleBtn" class="btn btn-secondary" title="থিম পরিবর্তন করুন">
+                <span id="themeToggleIcon">🌙</span> <span id="themeToggleText">নাইট মোড</span>
+            </button>
+            <a href="index.html" class="btn btn-secondary" style="text-decoration: none;">🏠 হালখাতা পেজে ফিরুন</a>
+            <a href="business_summary.html" class="btn btn-secondary" style="text-decoration: none;">📊 ব্যবসার সারসংক্ষেপ</a>
+        </div>
+    </header>
+
+    <!-- Error Banner -->
+    <div class="alert-banner alert-error" id="errorBanner"></div>
+
+    <!-- Running Total Hero Banner -->
+    <div class="total-banner">
+        <div class="total-banner-text">
+            <span>✨</span> আজকের মোট নগদ বিক্রয় (Today's Total Cash Sales):
+        </div>
+        <div class="total-banner-value" id="todayTotalDisplay">
+            ০ ৳
+        </div>
+    </div>
+
+    <!-- Grid Layout: Step 1 & Step 2 -->
+    <div class="grid-layout">
+
+        <!-- Column 1: Voice Input & Demo Clip Selection -->
+        <div class="glass-card">
+            <div class="card-title">
+                <span class="icon">🎙️</span> ধাপ ১: বিক্রয়ের ভয়েস রেকর্ড
+            </div>
+
+            <div class="input-methods">
+                <!-- Live Mic Recording -->
+                <div class="record-container">
+                    <button id="recordBtn" class="btn-record" title="কথা বলতে চাপ দিন">🎙️</button>
+                    <div class="record-label" id="recordStatus">বিক্রয়ের কথা বলতে মাইক্রোফোনে চাপ দিন</div>
+                </div>
+
+
+
+
+            </div>
+
+            <!-- Transcript Output -->
+            <div class="form-group">
+                <label>যা বলা হয়েছে (স্বয়ংক্রিয় বাংলা রেকর্ড):</label>
+                <div class="transcript-box" id="transcriptDisplay">কণ্ঠস্বরের অপেক্ষায়...</div>
+            </div>
+
+            <button id="extractSalesBtn" class="btn btn-purple" disabled>
+                <span>✨ এআই দিয়ে বিক্রি বের করুন</span>
+            </button>
+        </div>
+
+        <!-- Column 2: Multi-Item Sale Confirmation -->
+        <div class="glass-card">
+            <div class="card-title">
+                <span class="icon">📝</span> ধাপ ২: পণ্য তালিকা নিশ্চিতকরণ
+            </div>
+
+            <div class="form-group">
+                <label for="editCustomerName">গ্রাহকের নাম (ঐচ্ছিক):</label>
+                <input type="text" id="editCustomerName" placeholder="যেমন: রহিম / সাধারণ খরিদ্দার">
+            </div>
+
+            <div class="form-group">
+                <label>বিক্রিত পণ্যের তালিকা (Items List):</label>
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>পণ্যের নাম</th>
+                            <th style="width: 25%;">পরিমাণ</th>
+                            <th style="width: 25%;">একক দাম (৳)</th>
+                            <th style="width: 40px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsListBody">
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 12px;">কোন পণ্য যুক্ত করা হয়নি।</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button id="addItemRowBtn" class="btn btn-secondary btn-sm" style="align-self: flex-start; margin-top: 8px;">
+                    + নতুন পণ্য যোগ করুন
+                </button>
+            </div>
+
+            <div class="form-group" style="margin-top: 8px;">
+                <label for="editTotalAmount">সর্বমোট টাকা (Total Taka):</label>
+                <input type="text" id="editTotalAmount" placeholder="০" style="font-weight: 700; color: var(--accent-green); font-size: 16px;">
+            </div>
+
+            <button id="confirmSaleBtn" class="btn btn-primary" disabled style="margin-top: 16px;">
+                <span>💾 বিক্রয় জমা করুন (Confirm and Save)</span>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Read-Only Q&A Insights Card: Ask about sales -->
+    <div class="glass-card" id="salesAskCard">
+        <div class="card-title">
+            <span class="icon">🎤</span> আপনার বিক্রয় সম্পর্কে জিজ্ঞাসা করুন
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="font-size: 13px; color: var(--text-muted);">
+                দ্রুত নমুনা প্রশ্ন নির্বাচন করুন অথবা কথা বলুন / টাইপ করুন:
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="btn btn-secondary btn-sm sample-q-btn">আজকে মোট কত টাকার বিক্রি হয়েছে?</button>
+                <button class="btn btn-secondary btn-sm sample-q-btn">আজকে কি কি পণ্য বিক্রি হয়েছে?</button>
+                <button class="btn btn-secondary btn-sm sample-q-btn">গতকাল কত টাকার বিক্রি হয়েছে?</button>
+                <button class="btn btn-secondary btn-sm sample-q-btn">গত ৭ দিনে মোট বিক্রয় কত?</button>
+                <button class="btn btn-secondary btn-sm sample-q-btn">গত ৩০ দিনে মোট বিক্রয় কত?</button>
+                <button class="btn btn-secondary btn-sm sample-q-btn">গত ৭ দিনে সবচেয়ে বেশি বিক্রি কোন দিন হয়েছে?</button>
+                <button class="btn btn-secondary btn-sm sample-q-btn">প্রতিদিন গড়ে কত টাকার বিক্রি হয়?</button>
+            </div>
+
+            <!-- Dual-Input Panel (Text Input + Voice Mic Button) -->
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <input type="text" id="salesQuestionInput" placeholder="প্রশ্ন লিখুন, যেমন: আজকে কত টাকার পণ্য বিক্রি হয়েছে?" style="flex: 1; min-width: 260px;">
+                <button id="askSalesRecordBtn" class="btn btn-secondary" title="প্রশ্ন বলতে চাপ দিন">
+                    <span id="askSalesRecordIcon">🎤</span> <span id="askSalesRecordLabel">বলুন</span>
+                </button>
+                <button id="askSalesBtn" class="btn btn-purple" disabled>
+                    <span>জিজ্ঞাসা করুন</span>
+                </button>
+            </div>
+
+            <!-- Question & Answer Display Panel -->
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
+                <div style="font-size: 13px; color: var(--accent-teal); font-weight: 500;" id="salesQuestionDisplay"></div>
+                <div class="transcript-box" id="salesAnswerDisplay" style="min-height: 60px; font-weight: 500;">
+                    প্রশ্ন লিখুন, "বলুন" বোতামে চাপ দিয়ে কথা বলুন অথবা নমুনা প্রশ্ন বাছাই করুন।
+                </div>
+                <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <audio id="salesAudioPlayer" controls></audio>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales History List Card -->
+    <div class="glass-card">
+        <div class="card-title" style="justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="icon">📊</span> বিক্রয়ের সকল হিসাব তালিকা
+            </div>
+            <!-- Quick Date Range Filter Bar -->
+            <div class="filter-bar">
+                <button class="filter-btn" data-range="today">আজ</button>
+                <button class="filter-btn" data-range="7days">গত ৭ দিন</button>
+                <button class="filter-btn active" data-range="30days">গত ৩০ দিন</button>
+                <button class="filter-btn" data-range="all">সব</button>
+            </div>
+        </div>
+
+        <div id="historySummaryBanner" style="font-size: 14px; color: var(--accent-teal); font-weight: 500; padding: 2px 0;">
+            নির্বাচিত সময়ে মোট বিক্রয়: ০ ৳ (০টি লেনদেন)
+        </div>
+        
+        <div id="salesListContainer" style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="text-align: center; color: var(--text-muted); padding: 16px;">বিক্রয়ের সকল হিসাব লোড করা হচ্ছে...</div>
+        </div>
+    </div>
+
+</div>
+
+<script src="daily_sales.js"></script>
+</body>
+</html>

@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ভয়েস লেজার — বাংলা ভয়েস হিসাবের খাতা</title>
+
+    <!-- Early theme init script to prevent theme flash -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem("theme");
+            if (savedTheme === "light") {
+                document.documentElement.setAttribute("data-theme", "light");
+            }
+        })();
+    </script>
+
+    <!-- Google Fonts: Outfit & Noto Sans Bengali -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #080c14;
+            --bg-gradient: 
+                radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.1) 0%, transparent 55%);
+            --card-bg: rgba(17, 24, 39, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.35);
+            --accent-green: #10b981;
+            --accent-green-glow: rgba(16, 185, 129, 0.4);
+            --accent-teal: #06b6d4;
+            --accent-cyan-glow: rgba(6, 182, 212, 0.35);
+            --accent-purple: #8b5cf6;
+            --accent-purple-glow: rgba(139, 92, 246, 0.35);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --text-heading: #ffffff;
+            --input-bg: rgba(11, 15, 25, 0.7);
+            --input-border: rgba(255, 255, 255, 0.12);
+            --input-text: #f3f4f6;
+            --table-header-bg: rgba(11, 15, 25, 0.85);
+            --table-row-hover: rgba(255, 255, 255, 0.04);
+            --modal-bg: #111827;
+            --kpi-bg: rgba(17, 24, 39, 0.65);
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        [data-theme="light"] {
+            --bg-dark: #f8fafc;
+            --bg-gradient: 
+                radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.06) 0%, transparent 55%);
+            --card-bg: rgba(255, 255, 255, 0.88);
+            --card-border: rgba(0, 0, 0, 0.08);
+            --card-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.06);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --text-heading: #0f172a;
+            --input-bg: #ffffff;
+            --input-border: rgba(0, 0, 0, 0.15);
+            --input-text: #0f172a;
+            --table-header-bg: #f1f5f9;
+            --table-row-hover: rgba(0, 0, 0, 0.03);
+            --modal-bg: #ffffff;
+            --kpi-bg: rgba(255, 255, 255, 0.85);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans Bengali', 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            background-image: var(--bg-gradient);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1120px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 20px;
+            padding: 20px 28px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-icon {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-teal));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            box-shadow: 0 0 24px var(--accent-green-glow);
+            transition: transform 0.3s ease;
+        }
+
+        .brand-icon:hover {
+            transform: rotate(6deg) scale(1.05);
+        }
+
+        .brand-text h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-heading);
+            letter-spacing: -0.3px;
+        }
+
+        .brand-text p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .header-badges {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Layout Grid */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 850px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Glass Card */
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.16);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-heading);
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 14px;
+        }
+
+        .card-title .icon {
+            font-size: 22px;
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+        }
+
+        /* KPI Dashboard Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .kpi-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .kpi-card {
+            background: var(--kpi-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+        }
+
+        .kpi-title {
+            font-size: 13px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+
+        .kpi-value {
+            font-size: 24px;
+            font-weight: 700;
+            font-family: 'Noto Sans Bengali', sans-serif;
+            color: var(--text-heading);
+        }
+
+        /* Voice Input Controls */
+        .input-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .record-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 28px;
+            background: var(--input-bg);
+            border: 1px dashed var(--input-border);
+            border-radius: 16px;
+            gap: 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .record-container:hover {
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-record {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 28px rgba(239, 68, 68, 0.4);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
+        }
+
+        .btn-record:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 36px rgba(239, 68, 68, 0.65);
+        }
+
+        .btn-record.recording {
+            animation: pulse-red 1.2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 22px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .record-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 4px 0;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .divider span {
+            padding: 0 12px;
+        }
+
+        /* Controls / Selectors */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        select, input[type="text"], input[type="number"], input[type="file"] {
+            width: 100%;
+            padding: 11px 16px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
+            color: var(--input-text);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent-teal);
+            box-shadow: 0 0 0 3px var(--accent-cyan-glow);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 22px;
+            border-radius: 12px;
+            border: none;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-sm {
+            padding: 7px 12px;
+            font-size: 12px;
+            border-radius: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-green), #059669);
+            color: white;
+            box-shadow: 0 4px 18px var(--accent-green-glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px var(--accent-green-glow);
+        }
+
+        .btn-secondary {
+            background: var(--input-bg);
+            color: var(--text-main);
+            border: 1px solid var(--input-border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--card-border);
+            transform: translateY(-1px);
+        }
+
+        .btn-purple {
+            background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
+            color: white;
+            box-shadow: 0 4px 18px var(--accent-purple-glow);
+        }
+
+        .btn-purple:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px var(--accent-purple-glow);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+        }
+
+        .sample-q-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sample-q-btn:hover {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: var(--accent-purple);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        /* Transcript Output Box */
+        .transcript-box {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            padding: 16px;
+            min-height: 70px;
+            font-family: 'Noto Sans Bengali', sans-serif;
+            font-size: 15px;
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        audio {
+            width: 100%;
+            height: 40px;
+            border-radius: 10px;
+        }
+
+        /* Form Grid */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .three-col {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 600px) {
+            .three-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Table */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            font-family: 'Noto Sans Bengali', sans-serif;
+            text-align: left;
+        }
+
+        th {
+            background: var(--table-header-bg);
+            color: var(--text-muted);
+            padding: 14px 16px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--card-border);
+            color: var(--text-main);
+        }
+
+        tr:hover td {
+            background: var(--table-row-hover);
+        }
+
+        .status-pill {
+            padding: 4px 10px;
+            border-radius: 14px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-baki {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.35);
+        }
+
+        .status-paid {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+
+        .status-advance {
+            background: rgba(6, 182, 212, 0.15);
+            color: #06b6d4;
+            border: 1px solid rgba(6, 182, 212, 0.35);
+        }
+
+        /* Notifications & Spinners */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert-banner {
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 14px;
+            display: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+
+        /* Edit Row Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--modal-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 560px;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 14px;
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+            color: var(--text-heading);
+        }
+
+        .home-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .book-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px 20px;
+            text-decoration: none;
+            color: var(--text-heading);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            border: 1px solid var(--card-border);
+            border-left: 5px solid var(--accent-green);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .book-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+
+        .book-card.ledger-book {
+            border-left-color: #ef4444;
+        }
+
+        .book-card.sales-book {
+            border-left-color: #10b981;
+        }
+
+        .book-card.summary-book {
+            border-left-color: #4f46e5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Header -->
+    <header class="app-header">
+        <div class="brand-title">
+            <div class="brand-icon">🎙️</div>
+            <div class="brand-text">
+                <h1>ডিজিটাল হালখাতা (Digital Ledger)</h1>
+                <p>বাংলাদেশের প্রান্তিক বিক্রেতাদের ভয়েস হিসাবের ডিজিটাল হালখাতা</p>
+            </div>
+        </div>
+        <div class="header-badges">
+            <button id="themeToggleBtn" class="btn btn-secondary" title="থিম পরিবর্তন করুন">
+                <span id="themeToggleIcon">🌙</span> <span id="themeToggleText">নাইট মোড</span>
+            </button>
+            <a href="daily_sales.html" class="btn btn-secondary" style="text-decoration: none;">📋 আজকের বিক্রয় দেখুন</a>
+            <a href="business_summary.html" class="btn btn-secondary" style="text-decoration: none;">📊 ব্যবসার সারসংক্ষেপ</a>
+        </div>
+    </header>
+
+    <!-- Error Banner -->
+    <div class="alert-banner alert-error" id="errorBanner"></div>
+
+    <!-- Real-time 4 KPI Metric Cards Dashboard -->
+    <div class="kpi-grid">
+        <div class="kpi-card" style="border-left: 4px solid #38bdf8;">
+            <div class="kpi-title">💰 মোট বিক্রি</div>
+            <div class="kpi-value" id="kpiTotalSales">০ ৳</div>
+        </div>
+
+        <div class="kpi-card" style="border-left: 4px solid #34d399;">
+            <div class="kpi-title">✅ আদায়ের পরিমাণ</div>
+            <div class="kpi-value" id="kpiTotalPaid">০ ৳</div>
+        </div>
+
+        <div class="kpi-card" style="border-left: 4px solid #fbbf24;">
+            <div class="kpi-title">⏳ বকেয়া/বাকি</div>
+            <div class="kpi-value" id="kpiTotalDues">০ ৳</div>
+        </div>
+
+        <div class="kpi-card" style="border-left: 4px solid #c4b5fd;">
+            <div class="kpi-title">👥 মোট গ্রাহক</div>
+            <div class="kpi-value" id="kpiCustomerCount">০ জন</div>
+        </div>
+    </div>
+
+    <div class="grid-layout">
+
+        <!-- Column 1: Audio Input & Transcription -->
+        <div class="glass-card">
+            <div class="card-title">
+                <span class="icon">🎙️</span> ধাপ ১: কন্ঠস্বর ও তথ্যগ্রহণ
+            </div>
+
+            <div class="input-methods">
+                <!-- Live Mic Recording -->
+                <div class="record-container">
+                    <button id="recordBtn" class="btn-record" title="কথা বলতে মাইক্রোফোনে চাপ দিন">🎙️</button>
+                    <div class="record-label" id="recordStatus">হিসাব বলতে মাইক্রোফোনে চাপ দিন</div>
+                </div>
+
+
+
+
+            </div>
+
+            <!-- Transcript Output -->
+            <div class="form-group">
+                <label>যা বলা হয়েছে (স্বয়ংক্রিয় বাংলা রেকর্ড):</label>
+                <div class="transcript-box" id="transcriptDisplay">কণ্ঠস্বরের অপেক্ষায়...</div>
+            </div>
+
+            <button id="extractBtn" class="btn btn-purple" disabled>
+                <span>✨ এআই দিয়ে হিসাব বের করুন</span>
+            </button>
+        </div>
+
+        <!-- Column 2: Extracted Entry Confirmation -->
+        <div class="glass-card">
+            <div class="card-title">
+                <span class="icon">📝</span> ধাপ ২: এন্ট্রি পরিবর্তন ও নিশ্চিতকরণ
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="editTransactionType">লেনদেনের ধরন (Transaction Type):</label>
+                    <select id="editTransactionType">
+                        <option value="new_sale">নতুন বিক্রয় (New Sale)</option>
+                        <option value="update_existing">হিসাব আপডেট (Update Existing)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="editCustomer">গ্রাহকের নাম:</label>
+                    <input type="text" id="editCustomer" placeholder="যেমন: করিম / রশিদা">
+                </div>
+
+                <div class="form-group">
+                    <label for="editItem">পণ্যের নাম:</label>
+                    <input type="text" id="editItem" placeholder="যেমন: চাল / তেল">
+                </div>
+
+                <div class="form-group">
+                    <label for="editQuantity">পরিমাণ:</label>
+                    <input type="text" id="editQuantity" placeholder="যেমন: ৩ কেজি / ১ লিটার">
+                </div>
+
+                <div class="form-group">
+                    <label for="editMatchedId">পূর্বের এন্ট্রি নম্বর (Matched ID):</label>
+                    <input type="number" id="editMatchedId" placeholder="নম্বর">
+                </div>
+            </div>
+
+            <!-- Preview Amount Fields (Bangla Numerals) -->
+            <div class="form-grid three-col" style="margin-top: 4px;">
+                <div class="form-group">
+                    <label for="editTotalAmount">মোট টাকা:</label>
+                    <input type="text" id="editTotalAmount" placeholder="-" style="font-weight: 600; color: #38bdf8;">
+                </div>
+
+                <div class="form-group">
+                    <label for="editPaidAmount">পরিশোধিত টাকা:</label>
+                    <input type="text" id="editPaidAmount" placeholder="-" style="font-weight: 600; color: #34d399;">
+                </div>
+
+                <div class="form-group">
+                    <label for="editDueAmount">বাকির অবস্থা:</label>
+                    <input type="text" id="editDueAmount" placeholder="-" style="font-weight: 600; color: #fbbf24;">
+                </div>
+            </div>
+
+            <button id="confirmBtn" class="btn btn-primary" disabled style="margin-top: 16px;">
+                <span>💾 হালখাতায় জমা করুন (Save to Ledger)</span>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Daily Summary Card -->
+    <div class="glass-card">
+        <div class="card-title">
+            <span class="icon">📢</span> বিক্রেতার দৈনিক ভয়েস সারসংক্ষেপ
+        </div>
+        <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+            <button id="getSummaryBtn" class="btn btn-purple">
+                <span>🔊 দৈনিক হিসাবের সংক্ষিপ্ত বিবরণ শুনুন</span>
+            </button>
+            <div style="flex: 1; min-width: 250px;">
+                <audio id="summaryAudioPlayer" controls></audio>
+            </div>
+        </div>
+        <div class="transcript-box" id="summaryTextDisplay" style="min-height: 50px;">
+            উপরের বোতামে চাপ দিয়ে বাকি হিসাবের সংক্ষিপ্ত শব্দ শুনুন।
+        </div>
+    </div>
+
+    <!-- Read-Only Q&A Insights Card: Ask about dues -->
+    <div class="glass-card" id="insightsCard">
+        <div class="card-title">
+            <span class="icon">🎤</span> আপনার বাকি/পাওনা সম্পর্কে জিজ্ঞাসা করুন
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="font-size: 13px; color: var(--text-muted);">
+                দ্রুত নমুনা প্রশ্ন নির্বাচন করুন অথবা কথা বলুন / টাইপ করুন:
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="btn btn-secondary btn-sm sample-q-btn">কার কাছে সবচেয়ে বেশি বাকি আছে?</button>
+                <button class="btn btn-secondary btn-sm sample-q-btn">কার কাছে কোনো বাকি নেই?</button>
+                <button class="btn btn-secondary btn-sm sample-q-btn">সব মিলিয়ে সবার কাছে মোট কত টাকা বাকি?</button>
+                <button class="btn btn-secondary btn-sm sample-q-btn">কতজন কাস্টমারের কাছে এখন বাকি আছে?</button>
+                <button class="btn btn-secondary btn-sm sample-q-btn">কারো কাছে কি ৫০০ টাকার বেশি বাকি আছে?</button>
+            </div>
+
+            <!-- Dual-Input Panel (Text Input + Voice Mic Button) -->
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <input type="text" id="insightsQuestionInput" placeholder="প্রশ্ন লিখুন, যেমন: রহিমের কত টাকা বাকি?" style="flex: 1; min-width: 260px;">
+                <button id="askInsightsRecordBtn" class="btn btn-secondary" title="প্রশ্ন বলতে চাপ দিন">
+                    <span id="askInsightsRecordIcon">🎤</span> <span id="askInsightsRecordLabel">বলুন</span>
+                </button>
+                <button id="askInsightsBtn" class="btn btn-purple" disabled>
+                    <span>জিজ্ঞাসা করুন</span>
+                </button>
+            </div>
+
+            <!-- Question & Answer Display Panel -->
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
+                <div style="font-size: 13px; color: var(--accent-teal); font-weight: 500;" id="insightsQuestionDisplay"></div>
+                <div class="transcript-box" id="insightsAnswerDisplay" style="min-height: 60px; font-weight: 500;">
+                    প্রশ্ন লিখুন, "বলুন" বোতামে চাপ দিয়ে কথা বলুন অথবা নমুনা প্রশ্ন বাছাই করুন।
+                </div>
+                <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <audio id="insightsAudioPlayer" controls></audio>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Ledger Table Card -->
+    <div class="glass-card">
+        <div class="card-title">
+            <span class="icon">📊</span> হালখাতার সকল হিসাব তালিকা
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>নম্বর</th>
+                        <th>গ্রাহকের নাম</th>
+                        <th>পণ্য</th>
+                        <th>পরিমাণ</th>
+                        <th>মোট টাকা</th>
+                        <th>পরিশোধিত টাকা</th>
+                        <th>বাকির অবস্থা</th>
+                        <th>স্ট্যাটাস</th>
+                        <th>আপডেটের সময়</th>
+                        <th style="text-align: center;">ব্যবস্থা</th>
+                    </tr>
+                </thead>
+                <tbody id="ledgerTableBody">
+                    <tr>
+                        <td colspan="10" style="text-align: center; color: var(--text-muted);">তথ্য লোড করা হচ্ছে...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Direct Row Edit Modal -->
+<div class="modal-overlay" id="editModalOverlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>✏️ হালখাতার হিসাব পরিবর্তন করুন</h3>
+            <button class="modal-close" id="modalCloseBtn">&times;</button>
+        </div>
+        <input type="hidden" id="modalEntryId">
+        <div class="form-group">
+            <label for="modalCustomer">গ্রাহকের নাম:</label>
+            <input type="text" id="modalCustomer">
+        </div>
+        <div class="form-group">
+            <label for="modalItem">পণ্যের নাম:</label>
+            <input type="text" id="modalItem">
+        </div>
+        <div class="form-group">
+            <label for="modalQuantity">পরিমাণ:</label>
+            <input type="text" id="modalQuantity">
+        </div>
+        <div class="form-grid three-col">
+            <div class="form-group">
+                <label for="modalTotal">মোট টাকা:</label>
+                <input type="number" id="modalTotal">
+            </div>
+            <div class="form-group">
+                <label for="modalPaid">পরিশোধিত টাকা:</label>
+                <input type="number" id="modalPaid">
+            </div>
+            <div class="form-group">
+                <label for="modalDue">বাকির অবস্থা:</label>
+                <input type="number" id="modalDue">
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px;">
+            <button class="btn btn-secondary" id="modalCancelBtn">বাতিল</button>
+            <button class="btn btn-primary" id="modalSaveBtn">সংরক্ষণ করুন</button>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

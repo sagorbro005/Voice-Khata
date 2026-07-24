@@ -1,0 +1,25 @@
+# Environment & Secrets (IMPORTANT for Security & Submission)
+.env
+
+# SQLite Database Files
+*.db
+*.sqlite
+*.sqlite3
+
+# Audio Runtime Artifacts
+generated_audio/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest / Virtual Environments
+.pytest_cache/
+env/
+venv/
+ENV/
+
+# IDE Configuration
+.vscode/
+.idea/

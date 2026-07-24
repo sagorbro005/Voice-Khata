@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ব্যবসার সারসংক্ষেপ (Business Summary)</title>
+
+    <!-- Early theme init script to prevent theme flash -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem("theme");
+            if (savedTheme === "light") {
+                document.documentElement.setAttribute("data-theme", "light");
+            }
+        })();
+    </script>
+
+    <!-- Google Fonts: Outfit & Noto Sans Bengali -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(255, 255, 255, 0.6);
+            --text-heading: #0f172a;
+            --text-muted: #64748b;
+            --accent-green: #10b981;
+            --accent-teal: #0d9488;
+            --night-indigo: #312e81;
+            --khata-red: #dc2626;
+            --radius: 16px;
+            --font-body: 'Noto Sans Bengali', 'Outfit', system-ui, -apple-system, sans-serif;
+            --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --card-bg: rgba(30, 41, 59, 0.85);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-heading: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-green: #34d399;
+            --accent-teal: #2dd4bf;
+            --night-indigo: #a5b4fc;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-gradient);
+            color: var(--text-heading);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1050px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* App Header */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 18px 28px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius);
+            border: 1px solid var(--card-border);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon { font-size: 32px; }
+        .brand-text h1 { font-size: 22px; color: var(--text-heading); }
+        .brand-text p { font-size: 13px; color: var(--text-muted); }
+
+        .header-badges {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-secondary {
+            background: rgba(148, 163, 184, 0.15);
+            color: var(--text-heading);
+        }
+        .btn-secondary:hover { background: rgba(148, 163, 184, 0.25); }
+
+        .btn-purple {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+        }
+        .btn-purple:hover { transform: translateY(-1px); opacity: 0.95; }
+
+        /* Glass Cards */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius);
+            border: 1px solid var(--card-border);
+            padding: 24px;
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-heading);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--card-border);
+            background: transparent;
+            color: var(--text-heading);
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn.active {
+            background: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
+
+        /* Transcript & Summary Box */
+        .transcript-box {
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 18px;
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--text-heading);
+        }
+
+        /* Tables */
+        .summary-stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+
+        .summary-stats-table td {
+            padding: 12px 6px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            font-size: 15px;
+        }
+
+        .summary-stats-table td:last-child {
+            text-align: right;
+            font-weight: 700;
+            color: var(--night-indigo);
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        .items-table th, .items-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            font-size: 14px;
+        }
+
+        .items-table th {
+            background: rgba(148, 163, 184, 0.1);
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Header -->
+    <header class="app-header">
+        <div class="brand-title">
+            <div class="brand-icon">📊</div>
+            <div class="brand-text">
+                <h1>ব্যবসার সারসংক্ষেপ (Business Summary)</h1>
+                <p>ব্যাংক ও ক্ষুদ্র ঋণদানকারী কর্মকর্তা পর্যালোচনা প্রতিবেদন</p>
+            </div>
+        </div>
+        <div class="header-badges">
+            <button id="themeToggleBtn" class="btn btn-secondary" title="থিম পরিবর্তন করুন">
+                <span id="themeToggleIcon">🌙</span> <span id="themeToggleText">নাইট মোড</span>
+            </button>
+            <a href="index.html" class="btn btn-secondary" style="text-decoration: none;">🏠 হালখাতা পেজে ফিরুন</a>
+            <a href="daily_sales.html" class="btn btn-secondary" style="text-decoration: none;">📋 আজকের বিক্রয় দেখুন</a>
+        </div>
+    </header>
+
+    <!-- Period Selection & Generation Card -->
+    <div class="glass-card filter-card">
+        <div class="card-title" style="justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="icon">⚙️</span> সময়কাল নির্বাচন ও তৈরি (Select Period & Generate)
+            </div>
+            <div class="filter-bar">
+                <button class="filter-btn" data-range="today">আজ</button>
+                <button class="filter-btn" data-range="7days">গত ৭ দিন</button>
+                <button class="filter-btn active" data-range="30days">গত ৩০ দিন</button>
+                <button class="filter-btn" data-range="90days">গত ৯০ দিন</button>
+                <button class="filter-btn" data-range="all">সব সময়</button>
+            </div>
+        </div>
+
+        <button id="generateBtn" class="btn btn-purple" style="align-self: flex-start;">
+            <span>✨ এআই দিয়ে ব্যবসার সারসংক্ষেপ তৈরি করুন</span>
+        </button>
+    </div>
+
+    <!-- AI Generated Summary Narrative Card -->
+    <div class="glass-card">
+        <div class="card-title" style="justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div>
+                <span class="icon">📢</span> এআই লিখিত ব্যবসার সারসংক্ষেপ (Business Activity Summary)
+            </div>
+            <div style="font-size: 13px; color: var(--text-muted);" id="summaryMeta">
+                সময়কাল: গত ৩০ দিন | তারিখ: -
+            </div>
+        </div>
+
+        <div class="transcript-box" id="summaryNarrativeDisplay" style="min-height: 70px; font-weight: 500;">
+            "সারসংক্ষেপ তৈরি করুন" বোতামে চাপ দিয়ে ব্যাংক বা মাইক্রোফাইনান্স কর্মকর্তার জন্য প্রাতিষ্ঠানিক প্রতিবেদন তৈরি করুন।
+        </div>
+    </div>
+
+    <!-- Detailed Metrics & Activity Logs Card -->
+    <div class="glass-card">
+        <div class="card-title">
+            <span class="icon">📝</span> সূচক ও ব্যবসায়ের লেনদেন হিসেব লগ (Activity & Transaction Logs)
+        </div>
+
+        <!-- Stats Table -->
+        <table class="summary-stats-table">
+            <tbody id="summaryStatsBody">
+                <tr><td>সময়কাল (Period Covered)</td><td id="statPeriodLabel">-</td></tr>
+                <tr><td>মোট নগদ বিক্রয় (Total Cash Sales)</td><td id="statCashSales">০ ৳</td></tr>
+                <tr><td>মোট বাকিতে বিক্রয় (Total Credit Sales Issued)</td><td id="statCreditSales">০ ৳</td></tr>
+                <tr><td>বর্তমানে মোট পাওনা (Current Total Receivable Due)</td><td id="statCurrentDue">০ ৳</td></tr>
+                <tr><td>সেবা প্রাপ্ত গ্রাহক সংখ্যা (Unique Customers Served)</td><td id="statUniqueCustomers">০ জন</td></tr>
+                <tr><td>সক্রিয় ব্যবসায়িক দিন (Active Business Days)</td><td id="statActiveDays">০ দিন</td></tr>
+            </tbody>
+        </table>
+
+        <!-- Activity Logs Table -->
+        <div style="margin-top: 16px;">
+            <div style="font-weight: 700; font-size: 15px; margin-bottom: 8px;">
+                📋 লেনদেন ও হিসেব হিস্ট্রি (Recent Transactions Log):
+            </div>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>তারিখ</th>
+                        <th>ধরণ</th>
+                        <th>গ্রাহকের নাম</th>
+                        <th>মোট টাকা</th>
+                        <th>বিবরণ</th>
+                    </tr>
+                </thead>
+                <tbody id="activityLogsBody">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 14px;">
+                            সারসংক্ষেপ তৈরি করলে সকল লেনদেনের হিসেব প্রদর্শিত হবে।
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script src="business_summary.js"></script>
+</body>
+</html>

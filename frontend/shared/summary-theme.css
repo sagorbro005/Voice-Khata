@@ -1,0 +1,128 @@
+/* shared/summary-theme.css - Loaded ONLY on business_summary.html */
+@import url('https://fonts.googleapis.com/css2?family=Tiro+Bangla&display=swap');
+
+:root {
+  --night-indigo: #312e81;
+  --ink: #1e293b;
+  --font-body: system-ui, -apple-system, sans-serif;
+}
+
+.summary-page {
+  background: #FAFAF8;
+  min-height: 100vh;
+  padding: 32px 16px;
+}
+
+.summary-document {
+  max-width: 640px;
+  margin: 0 auto;
+  background: white;
+  border: 1px solid #E2DED4;
+  border-radius: 6px;
+  padding: 40px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.summary-letterhead {
+  border-bottom: 2px solid var(--night-indigo);
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-letterhead h1 {
+  font-family: 'Tiro Bangla', serif;
+  font-size: 1.6rem;
+  color: var(--night-indigo);
+  margin: 0 0 4px 0;
+}
+
+.summary-meta {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: #767267;
+}
+
+.summary-narrative {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--ink);
+  margin: 24px 0;
+}
+
+.summary-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.summary-stats-table td {
+  padding: 10px 4px;
+  border-bottom: 1px solid #EEEAE0;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+}
+
+.summary-stats-table td:last-child {
+  text-align: right;
+  font-weight: 600;
+  color: var(--night-indigo);
+}
+
+.summary-footer-note {
+  margin-top: 28px;
+  font-size: 0.75rem;
+  color: #999;
+  font-style: italic;
+}
+
+.period-select-row, .generate-btn, .download-btn {
+  max-width: 640px;
+  margin: 0 auto 16px auto;
+}
+
+.period-select-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.generate-btn {
+  background: var(--night-indigo);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1rem;
+  width: 100%;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.generate-btn:disabled {
+  background: #B8BEC9;
+  cursor: not-allowed;
+}
+
+.download-btn {
+  background: white;
+  color: var(--night-indigo);
+  border: 2px solid var(--night-indigo);
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1rem;
+  width: 100%;
+  cursor: pointer;
+  display: none; /* only shown after content is generated */
+  transition: all 0.2s ease;
+}
+
+.download-btn:hover {
+  background: #f1f5f9;
+}
