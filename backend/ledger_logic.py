@@ -47,7 +47,21 @@ def resolve_matched_entries(transaction: dict, db) -> list:
     raise ValueError(f"No open entry found for {transaction.get('customer_name')}")
 
 
-def compute_ledger_update(transaction: dict, db) -> list:
+def compute_ledger_update(transaction: dict, db=None, db_path: str = None) -> list:
+    if db is None:
+        target_path = db_path or "voice_khata.db"
+        import ledger_db
+        class LocalDBHelper:
+            def __init__(self, p: str):
+                self.p = p
+            def get_entry(self, eid: int):
+                return ledger_db.get_entry(eid, self.p)
+            def get_open_entries_by_name(self, name: str):
+                return ledger_db.get_open_entries_by_name(name, self.p)
+            def get_open_entries(self):
+                return ledger_db.get_open_entries(self.p)
+        db = LocalDBHelper(target_path)
+
     t = transaction.get("transaction_type")
 
     if t == "new_sale":
