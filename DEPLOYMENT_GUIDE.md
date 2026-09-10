@@ -34,8 +34,8 @@ git push -u origin deploy
    - **Branch**: Select **`deploy`** *(Important!)*
    - **Root Directory**: Leave blank (or `.`)
    - **Runtime**: `Python 3`
-   - **Build Command**: `pip install -r backend/requirements.txt`
-   - **Start Command**: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
    - **Plan Type**: **Free** ($0/month)
 5. Under **Environment Variables**, add:
    - `PYTHON_VERSION`: `3.10.12`
