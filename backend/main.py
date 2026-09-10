@@ -43,21 +43,28 @@ logging.basicConfig(
 )
 logger = logging.getLogger("voice_khata")
 
-# Fail fast requirement check for OpenRouter API Key
-openrouter_key = os.getenv("OPENROUTER_API_KEY", "")
-has_openrouter = openrouter_key and "sk-or-v1-xxxxxxxx" not in openrouter_key and openrouter_key.strip() != ""
+# API Key requirement check
+openrouter_key = os.getenv("OPENROUTER_API_KEY", "").strip()
+gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+groq_key = os.getenv("GROQ_API_KEY", "").strip()
 
-if not has_openrouter:
+has_valid_key = (
+    (openrouter_key and "sk-or-v1-xxxxxxxx" not in openrouter_key) or
+    (gemini_key and "your_gemini" not in gemini_key) or
+    (groq_key and "gsk_your_groq" not in groq_key)
+)
+
+if not has_valid_key:
     error_msg = (
         "\n" + "=" * 80 + "\n"
-        "FATAL ERROR: OpenRouter API Key missing in environment!\n"
-        "Please set OPENROUTER_API_KEY in your .env file:\n"
-        "  OPENROUTER_API_KEY=sk-or-v1-your-key-here\n" +
+        "FATAL ERROR: LLM API Key missing in environment!\n"
+        "Please set OPENROUTER_API_KEY, GEMINI_API_KEY, or GROQ_API_KEY in your environment.\n"
         "=" * 80 + "\n"
     )
     logger.critical(error_msg)
     sys.stderr.write(error_msg)
     sys.exit(1)
+
 
 # Initialize Database on startup
 DB_PATH = os.getenv("DB_PATH", os.path.join(os.path.dirname(__file__), "..", "voice_khata.db"))
