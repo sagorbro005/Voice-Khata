@@ -155,14 +155,14 @@ def _get_llm_config() -> Dict[str, Any]:
         env_model = os.getenv("GEMMA_MODEL_NAME", "").strip()
         preferred_model = env_model or "google/gemma-4-26b-a4b-it:free"
 
-        # Ordered free models to try on OpenRouter if the upstream pool is rate-limited (429)
+        # Currently active free models on OpenRouter
         free_fallbacks = [
             preferred_model,
-            "google/gemma-2-9b-it:free",
-            "meta-llama/llama-3.3-70b-instruct:free",
-            "meta-llama/llama-3.1-8b-instruct:free",
-            "qwen/qwen-2.5-72b-instruct:free",
-            "mistralai/mistral-7b-instruct:free"
+            "google/gemma-4-31b-it:free",
+            "google/gemma-4-26b-a4b-it:free",
+            "nvidia/nemotron-3.5-lightning:free",
+            "nex-agi/nex-n2.5-mini:free",
+            "liquid/lfm-2.5-2.6b:free"
         ]
         unique_fallbacks = list(dict.fromkeys([m for m in free_fallbacks if m]))
 
@@ -187,7 +187,7 @@ def _get_llm_config() -> Dict[str, Any]:
             "fallback_models": [model_name, "llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
         }
 
-    raise ValueError("Missing API key! Please set OPENROUTER_API_KEY, GEMINI_API_KEY, or GROQ_API_KEY in your environment.")
+    raise ValueError("Missing API key! Please set GEMINI_API_KEY, OPENROUTER_API_KEY, or GROQ_API_KEY in your environment.")
 
 
 def _call_gemma_api(messages: List[Dict[str, str]], retries: int = 1) -> str:
@@ -210,7 +210,7 @@ def _call_gemma_api(messages: List[Dict[str, str]], retries: int = 1) -> str:
                     messages=messages,
                     temperature=0.1,
                     top_p=0.9,
-                    max_tokens=512,
+                    max_tokens=1024,
                     timeout=30.0
                 )
                 raw_text = response.choices[0].message.content
@@ -220,14 +220,15 @@ def _call_gemma_api(messages: List[Dict[str, str]], retries: int = 1) -> str:
                 last_error = e
                 err_msg = str(e)
                 logger.warning(f"LLM call to {model_name} failed: {err_msg}")
-                # If 429 rate limit on shared pool, break attempt loop and switch to next fallback model immediately!
-                if "429" in err_msg or "rate-limited" in err_msg.lower() or "quota" in err_msg.lower():
-                    logger.info(f"Model {model_name} is rate-limited upstream (429). Switching to next fallback model...")
+                # If 429 rate limit or 404 model not found, skip attempt loop immediately
+                if any(k in err_msg.lower() for k in ["429", "rate", "quota", "404", "not found", "unavailable", "no endpoints"]):
+                    logger.info(f"Model {model_name} unavailable ({err_msg}). Switching to next fallback model immediately...")
                     break
                 if attempt < retries:
                     time.sleep(1.0)
 
     raise RuntimeError(f"LLM API request failed ({cfg['provider']}): {str(last_error)}")
+
 
 
 def _clean_json_text(text: str) -> str:
