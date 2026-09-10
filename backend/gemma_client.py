@@ -132,62 +132,21 @@ class GemmaCallError(Exception):
 
 from dotenv import load_dotenv
 
-def _get_llm_config() -> Dict[str, Any]:
+def _get_llm_config() -> Dict[str, str]:
     load_dotenv(override=True)
+    openrouter_key = os.getenv("OPENROUTER_API_KEY")
 
-    # 1. Direct Google Gemini API (Dedicated free tier from Google AI Studio)
-    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
-    if gemini_key and gemini_key != "your_gemini_api_key_here":
-        clean_key = gemini_key.strip('"').strip("'")
-        model_name = os.getenv("GEMINI_MODEL_NAME", "").strip() or "gemini-1.5-flash"
-        return {
-            "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
-            "api_key": clean_key,
-            "model": model_name,
-            "provider": "Google Gemini (Official)",
-            "fallback_models": [model_name, "gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"]
-        }
-
-    # 2. OpenRouter API (supports user-configured model and automatic free fallback chain on 429)
-    openrouter_key = os.getenv("OPENROUTER_API_KEY", "").strip()
-    if openrouter_key and openrouter_key != "sk-or-v1-xxxxxxxxxxxxxxxxxxxx":
-        clean_key = openrouter_key.strip('"').strip("'")
-        env_model = os.getenv("GEMMA_MODEL_NAME", "").strip()
-        preferred_model = env_model or "google/gemma-4-26b-a4b-it:free"
-
-        # Currently active free models on OpenRouter
-        free_fallbacks = [
-            preferred_model,
-            "google/gemma-4-31b-it:free",
-            "google/gemma-4-26b-a4b-it:free",
-            "nvidia/nemotron-3.5-lightning:free",
-            "nex-agi/nex-n2.5-mini:free",
-            "liquid/lfm-2.5-2.6b:free"
-        ]
-        unique_fallbacks = list(dict.fromkeys([m for m in free_fallbacks if m]))
-
+    if openrouter_key and openrouter_key.strip() and openrouter_key.strip() != "sk-or-v1-xxxxxxxxxxxxxxxxxxxx":
+        clean_key = openrouter_key.strip().strip('"').strip("'")
+        model_name = "google/gemma-4-26b-a4b-it:free"
         return {
             "base_url": "https://openrouter.ai/api/v1",
             "api_key": clean_key,
-            "model": preferred_model,
-            "provider": "OpenRouter",
-            "fallback_models": unique_fallbacks
-        }
-
-    # 3. Groq API
-    groq_key = os.getenv("GROQ_API_KEY", "").strip()
-    if groq_key and groq_key != "gsk_your_groq_api_key_here":
-        clean_key = groq_key.strip('"').strip("'")
-        model_name = os.getenv("GROQ_MODEL_NAME", "").strip() or "llama-3.3-70b-versatile"
-        return {
-            "base_url": "https://api.groq.com/openai/v1",
-            "api_key": clean_key,
             "model": model_name,
-            "provider": "Groq",
-            "fallback_models": [model_name, "llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+            "provider": "OpenRouter"
         }
-
-    raise ValueError("Missing API key! Please set GEMINI_API_KEY, OPENROUTER_API_KEY, or GROQ_API_KEY in your environment.")
+    else:
+        raise ValueError("Missing API key! Please set OPENROUTER_API_KEY in your .env file.")
 
 
 def _call_gemma_api(messages: List[Dict[str, str]], retries: int = 1) -> str:
@@ -198,41 +157,34 @@ def _call_gemma_api(messages: List[Dict[str, str]], retries: int = 1) -> str:
         http_client=httpx.Client(timeout=30.0)
     )
 
-    models_to_try = cfg.get("fallback_models", [cfg["model"]])
+    model_name = cfg["model"]
     last_error = None
+    for attempt in range(retries + 1):
+        try:
+            logger.info(f"Calling LLM via {cfg['provider']} ({model_name}), attempt {attempt + 1}/{retries + 1}")
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=messages,
+                temperature=0.1,
+                top_p=0.9,
+                max_tokens=512,
+                timeout=30.0
+            )
+            raw_text = response.choices[0].message.content
+            return raw_text.strip()
+        except Exception as e:
+            last_error = e
+            logger.warning(f"LLM call to {model_name} failed on attempt {attempt + 1}: {e}")
+            if attempt < retries:
+                time.sleep(1.0)
+            else:
+                break
 
-    for model_name in models_to_try:
-        for attempt in range(retries + 1):
-            try:
-                logger.info(f"Calling LLM via {cfg['provider']} ({model_name}), attempt {attempt + 1}/{retries + 1}")
-                response = client.chat.completions.create(
-                    model=model_name,
-                    messages=messages,
-                    temperature=0.1,
-                    top_p=0.9,
-                    max_tokens=1024,
-                    timeout=30.0
-                )
-                raw_text = response.choices[0].message.content
-                if raw_text and raw_text.strip():
-                    return raw_text.strip()
-            except Exception as e:
-                last_error = e
-                err_msg = str(e)
-                logger.warning(f"LLM call to {model_name} failed: {err_msg}")
-                # If 429 rate limit or 404 model not found, skip attempt loop immediately
-                if any(k in err_msg.lower() for k in ["429", "rate", "quota", "404", "not found", "unavailable", "no endpoints"]):
-                    logger.info(f"Model {model_name} unavailable ({err_msg}). Switching to next fallback model immediately...")
-                    break
-                if attempt < retries:
-                    time.sleep(1.0)
-
-    raise RuntimeError(f"LLM API request failed ({cfg['provider']}): {str(last_error)}")
-
+    raise RuntimeError(f"Gemma API request failed ({cfg['provider']}): {str(last_error)}")
 
 
 def _clean_json_text(text: str) -> str:
-    """Clean markdown code block wrappers if present and isolate JSON object."""
+    """Clean markdown code block wrappers if present."""
     text = text.strip()
     if text.startswith("```json"):
         text = text[7:]
@@ -240,14 +192,6 @@ def _clean_json_text(text: str) -> str:
         text = text[3:]
     if text.endswith("```"):
         text = text[:-3]
-    text = text.strip()
-
-    # If still has outer text, extract substring from first { to last }
-    if not (text.startswith("{") and text.endswith("}")):
-        start = text.find("{")
-        end = text.rfind("}")
-        if start != -1 and end != -1 and end > start:
-            text = text[start:end + 1]
     return text.strip()
 
 
