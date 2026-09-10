@@ -5,7 +5,7 @@
 
 // Production Render backend service URL.
 // When you deploy your backend on Render, replace this with your actual Render URL (e.g., https://your-service-name.onrender.com)
-const DEFAULT_RENDER_BACKEND_URL = "https://voice-khata-backend.onrender.com";
+const DEFAULT_RENDER_BACKEND_URL = "https://voice-khata.onrender.com";
 
 const VoiceKhataConfig = {
   getApiBase: function () {
