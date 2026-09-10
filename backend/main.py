@@ -60,7 +60,8 @@ if not has_openrouter:
     sys.exit(1)
 
 # Initialize Database on startup
-DB_PATH = os.path.join(os.path.dirname(__file__), "..", "voice_khata.db")
+DB_PATH = os.getenv("DB_PATH", os.path.join(os.path.dirname(__file__), "..", "voice_khata.db"))
+os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)), exist_ok=True)
 ledger_db.init_db(DB_PATH)
 
 # Helper DB wrapper interface expected by ledger_logic
@@ -94,10 +95,30 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup_event() -> None:
-    """Load fast STT model ONCE on app startup for optimal speech-to-text response speed."""
-    logger.info("Pre-loading fast ASR model on startup...")
-    asr.init_asr_model()
-    logger.info("ASR model pre-loaded successfully.")
+    """Initialize STT model on app startup if available."""
+    logger.info("Initializing ASR configuration...")
+    try:
+        asr.init_asr_model()
+        logger.info("ASR initialized successfully.")
+    except Exception as e:
+        logger.warning(f"ASR initialization notice: {e}")
+
+
+@app.get("/")
+def root_endpoint() -> Dict[str, Any]:
+    """Root endpoint verifying API is running."""
+    return {
+        "status": "online",
+        "app": "Voice Khata API",
+        "version": "1.0.0",
+        "endpoints": {
+            "health": "/health",
+            "docs": "/docs",
+            "entries": "/entries",
+            "daily_sales": "/daily-sales/today",
+            "business_summary": "/business-summary"
+        }
+    }
 
 
 @app.get("/health")

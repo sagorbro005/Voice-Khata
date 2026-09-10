@@ -146,17 +146,66 @@ class Speech2TextWrapper:
             return str(res).strip()
 
 
-def init_asr_model(model_size: str = None) -> Speech2TextWrapper:
+def transcribe_with_groq(file_path_or_bytes) -> Optional[str]:
+    """
+    Transcribe Bangla audio using Groq's free Whisper-large-v3 API.
+    Provides ~200ms ultra-fast transcription with 0 MB server RAM usage.
+    """
+    groq_api_key = os.getenv("GROQ_API_KEY", "").strip()
+    if not groq_api_key or groq_api_key == "gsk_your_groq_api_key_here":
+        return None
+
+    try:
+        import httpx
+        if isinstance(file_path_or_bytes, bytes):
+            audio_bytes = file_path_or_bytes
+        else:
+            with open(file_path_or_bytes, "rb") as f:
+                audio_bytes = f.read()
+
+        headers = {"Authorization": f"Bearer {groq_api_key}"}
+        files = {"file": ("audio.wav", audio_bytes, "audio/wav")}
+        data = {"model": "whisper-large-v3", "language": "bn", "response_format": "json"}
+
+        with httpx.Client(timeout=30.0) as client:
+            resp = client.post(
+                "https://api.groq.com/openai/v1/audio/transcriptions",
+                headers=headers,
+                files=files,
+                data=data
+            )
+            if resp.status_code == 200:
+                result = resp.json()
+                text = result.get("text", "").strip()
+                logger.info(f"Groq Whisper transcription success: '{text}'")
+                return text
+            else:
+                logger.warning(f"Groq Whisper API returned {resp.status_code}: {resp.text}")
+                return None
+    except Exception as e:
+        logger.warning(f"Groq Whisper transcription failed: {e}. Falling back to local STT.")
+        return None
+
+
+def init_asr_model(model_size: str = None) -> Optional[Speech2TextWrapper]:
     """Explicitly initialize STT model ONCE at app startup."""
     global _stt_instance
+    if os.getenv("GROQ_API_KEY", "").strip() and os.getenv("GROQ_API_KEY", "").strip() != "gsk_your_groq_api_key_here":
+        logger.info("GROQ_API_KEY detected. Using Groq Cloud Whisper for fast zero-RAM speech recognition.")
+        return None
+
     if _stt_instance is None:
-        if model_size is None:
-            model_size = os.getenv("ASR_MODEL_SIZE", "base").strip()
-        _stt_instance = Speech2TextWrapper(model_size)
+        try:
+            if model_size is None:
+                model_size = os.getenv("ASR_MODEL_SIZE", "base").strip()
+            _stt_instance = Speech2TextWrapper(model_size)
+        except Exception as e:
+            logger.error(f"Could not initialize local ASR model (likely memory constraint on free host): {e}")
+            _stt_instance = None
     return _stt_instance
 
 
-def get_stt_model(model_size: str = None) -> Speech2TextWrapper:
+def get_stt_model(model_size: str = None) -> Optional[Speech2TextWrapper]:
     global _stt_instance
     if _stt_instance is None:
         _stt_instance = init_asr_model(model_size)
@@ -166,14 +215,23 @@ def get_stt_model(model_size: str = None) -> Speech2TextWrapper:
 def transcribe_audio(file_path_or_bytes, model_size: str = None) -> str:
     """
     Transcribe audio bytes or file path into Bangla text.
-    Uses pre-loaded module-level STT model instance.
+    Uses Groq Whisper API if GROQ_API_KEY is present, else falls back to pre-loaded local STT.
     """
+    # 1. Try Groq Whisper API first if configured (zero RAM, ultra-fast)
+    groq_res = transcribe_with_groq(file_path_or_bytes)
+    if groq_res is not None:
+        return groq_res
+
+    # 2. Fall back to local banglaspeech2text / HuggingFace model
     try:
         stt_wrapper = get_stt_model(model_size)
+        if stt_wrapper is None:
+            raise RuntimeError("Local speech-to-text model is unavailable. Please set GROQ_API_KEY in environment.")
         full_transcript = stt_wrapper.transcribe(file_path_or_bytes)
 
-        logger.info(f"Transcription completed: '{full_transcript}'")
+        logger.info(f"Local transcription completed: '{full_transcript}'")
         return full_transcript
     except Exception as e:
         logger.error(f"Error during audio transcription: {str(e)}", exc_info=True)
         raise RuntimeError(f"Transcription failed: {str(e)}")
+
