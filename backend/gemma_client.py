@@ -132,17 +132,31 @@ class GemmaCallError(Exception):
 
 from dotenv import load_dotenv
 
-def _get_llm_config() -> Dict[str, str]:
+def _get_llm_config() -> Dict[str, Any]:
     load_dotenv(override=True)
     openrouter_key = os.getenv("OPENROUTER_API_KEY")
 
     if openrouter_key and openrouter_key.strip() and openrouter_key.strip() != "sk-or-v1-xxxxxxxxxxxxxxxxxxxx":
         clean_key = openrouter_key.strip().strip('"').strip("'")
-        model_name = "google/gemma-4-26b-a4b-it:free"
+        env_model = os.getenv("GEMMA_MODEL_NAME", "").strip()
+
+        # Reliable free models chain on OpenRouter (if primary 429s, automatically tries next)
+        fallback_models = [
+            env_model,
+            "nvidia/nemotron-3-super-120b-a12b:free",
+            "nex-agi/nex-n2.5-pro:free",
+            "nvidia/nemotron-3.5-lightning:free",
+            "nex-agi/nex-n2.5-mini:free",
+            "nvidia/nemotron-3-ultra-550b-a55b:free",
+            "google/gemma-4-31b-it:free",
+            "google/gemma-4-26b-a4b-it:free"
+        ]
+        unique_models = list(dict.fromkeys([m for m in fallback_models if m]))
         return {
             "base_url": "https://openrouter.ai/api/v1",
             "api_key": clean_key,
-            "model": model_name,
+            "model": unique_models[0],
+            "fallback_models": unique_models,
             "provider": "OpenRouter"
         }
     else:
@@ -157,34 +171,39 @@ def _call_gemma_api(messages: List[Dict[str, str]], retries: int = 1) -> str:
         http_client=httpx.Client(timeout=30.0)
     )
 
-    model_name = cfg["model"]
+    models_to_try = cfg.get("fallback_models", [cfg["model"]])
     last_error = None
-    for attempt in range(retries + 1):
-        try:
-            logger.info(f"Calling LLM via {cfg['provider']} ({model_name}), attempt {attempt + 1}/{retries + 1}")
-            response = client.chat.completions.create(
-                model=model_name,
-                messages=messages,
-                temperature=0.1,
-                top_p=0.9,
-                max_tokens=512,
-                timeout=30.0
-            )
-            raw_text = response.choices[0].message.content
-            return raw_text.strip()
-        except Exception as e:
-            last_error = e
-            logger.warning(f"LLM call to {model_name} failed on attempt {attempt + 1}: {e}")
-            if attempt < retries:
-                time.sleep(1.0)
-            else:
-                break
+
+    for model_name in models_to_try:
+        for attempt in range(retries + 1):
+            try:
+                logger.info(f"Calling LLM via {cfg['provider']} ({model_name}), attempt {attempt + 1}/{retries + 1}")
+                response = client.chat.completions.create(
+                    model=model_name,
+                    messages=messages,
+                    temperature=0.1,
+                    top_p=0.9,
+                    max_tokens=512,
+                    timeout=30.0
+                )
+                raw_text = response.choices[0].message.content
+                if raw_text and raw_text.strip():
+                    return raw_text.strip()
+            except Exception as e:
+                last_error = e
+                err_msg = str(e)
+                logger.warning(f"LLM call to {model_name} failed on attempt {attempt + 1}: {err_msg}")
+                if any(k in err_msg.lower() for k in ["429", "rate", "quota", "404", "not found", "unavailable", "no endpoints"]):
+                    logger.info(f"Model {model_name} unavailable ({err_msg}). Switching to next fallback model immediately...")
+                    break
+                if attempt < retries:
+                    time.sleep(1.0)
 
     raise RuntimeError(f"Gemma API request failed ({cfg['provider']}): {str(last_error)}")
 
 
 def _clean_json_text(text: str) -> str:
-    """Clean markdown code block wrappers if present."""
+    """Clean markdown code block wrappers if present and isolate JSON object."""
     text = text.strip()
     if text.startswith("```json"):
         text = text[7:]
@@ -192,7 +211,15 @@ def _clean_json_text(text: str) -> str:
         text = text[3:]
     if text.endswith("```"):
         text = text[:-3]
+    text = text.strip()
+
+    if not (text.startswith("{") and text.endswith("}")):
+        start = text.find("{")
+        end = text.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            text = text[start:end + 1]
     return text.strip()
+
 
 
 def call_gemma(
