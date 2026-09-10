@@ -5,6 +5,7 @@ import tempfile
 import av
 import torch
 import numpy as np
+from typing import Optional, Any, Dict, List, Union
 from banglaspeech2text import Speech2Text
 from banglaspeech2text.utils.models import ModelMetadata
 from transformers import pipeline
